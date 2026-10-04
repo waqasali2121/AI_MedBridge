@@ -16,22 +16,72 @@ export class MockPrescriptionExtractor {
   async extract(file) {
     if (!file) throw new Error('No file provided');
 
-    // Simulate short processing delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Convert File to Base64 
+    const getBase64 = (f) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(f);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
 
     let extractedText = '';
 
-    // If it's an image, attempt basic OCR
-    if (file.type && file.type.startsWith('image/')) {
-      try {
-        const { data } = await Tesseract.recognize(file, 'eng');
-        extractedText = data.text;
-      } catch (err) {
-        console.error('Tesseract OCR failed', err);
-        extractedText = ''; // Fallback
+    try {
+      // Priority 1: Groq API (if vision capable and key exists)
+      const groqKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem('GROQ_API_KEY') || '';
+      
+      if (groqKey && file.type.startsWith('image/')) {
+         const base64Data = await getBase64(file);
+         const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'llama-3.2-11b-vision-preview',
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    { type: 'text', text: 'Please extract all text from this prescription image verbatim. Do not hallucinate or add any commentary. Ensure Urdu is preserved if present.' },
+                    { type: 'image_url', image_url: { url: base64Data } }
+                  ]
+                }
+              ]
+            })
+         });
+         
+         if (res.ok) {
+           const data = await res.json();
+           extractedText = data.choices[0]?.message?.content || '';
+         }
+      } 
+      
+      // Fallback: OCR.Space API (supports PDFs natively & completely free)
+      if (!extractedText) {
+         const formData = new FormData();
+         formData.append('apikey', 'helloworld'); // Free public tier key
+         formData.append('language', 'eng');
+         formData.append('file', file);
+         formData.append('scale', 'true');
+         formData.append('isTable', 'true');
+         
+         const ocrRes = await fetch('https://api.ocr.space/parse/image', {
+            method: 'POST',
+            body: formData
+         });
+         
+         if (ocrRes.ok) {
+            const ocrData = await ocrRes.json();
+            if (ocrData.ParsedResults && ocrData.ParsedResults.length > 0) {
+              extractedText = ocrData.ParsedResults.map(p => p.ParsedText).join('\\n');
+            }
+         }
       }
-    } else if (file.type === 'application/pdf') {
-       extractedText = 'Extracted Text from PDF Placeholder\nPlease note that browser PDF OCR requires server-side rendering.';
+    } catch (err) {
+      console.error('OCR Extraction failed:', err);
+      extractedText = '';
     }
 
     const state = getAppState();
