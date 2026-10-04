@@ -1,3 +1,5 @@
+import { getAppState } from './mockData'
+
 export const aiService = {
   processChat: async (message) => {
     // Basic heuristics to act as RAG assistant and triage
@@ -5,6 +7,48 @@ export const aiService = {
     
     // Simulate thinking delay
     await new Promise(resolve => setTimeout(resolve, 800))
+
+    // Check for MRN queries
+    const mrnMatch = lowerMessage.match(/mrn:\s*(\d+)/i)
+    if (mrnMatch) {
+      const mrn = mrnMatch[1]
+      const state = getAppState()
+      
+      // Find patient by MRN
+      const patient = (state.users || []).find(u => u.patient_details?.mrn === mrn)
+      if (!patient) {
+        return {
+          text: `I could not find any active patient records for MRN: ${mrn}. Please verify the number or contact support.`,
+          escalationType: null,
+          concernType: 'other'
+        }
+      }
+
+      // Find active medication plan
+      const activePlan = (state.medication_plans || []).find(p => p.patient_id === patient.id && p.status === 'approved')
+      
+      if (!activePlan || !activePlan.medicines || activePlan.medicines.length === 0) {
+        return {
+          text: `I found your record (MRN: ${mrn}, ${patient.full_name.split(' ')[0]}), but you do not currently have any active or approved medication plans. If you recently uploaded a prescription, it may still be pending verification by your Care Pharmacist.`,
+          escalationType: null,
+          concernType: 'other'
+        }
+      }
+
+      const medicinesList = activePlan.medicines.map(m => {
+        let text = `- **${m.medicine_name} ${m.strength || ''}**\n  - Dose: ${m.dose || ''} ${m.frequency || ''}\n  - Instructions: ${m.special_instruction || 'Use as directed.'}`
+        if(m.food_instruction && m.food_instruction.toLowerCase() !== 'none') {
+           text += `\n  - Note: ${m.food_instruction}`
+        }
+        return text
+      }).join('\n\n')
+
+      return {
+        text: `Here is the verified medication information for MRN **${mrn}** (${patient.full_name}) as approved by your doctor and pharmacist:\n\n${medicinesList}\n\nPlease take these exactly as scheduled on your dashboard.`,
+        escalationType: null,
+        concernType: 'other'
+      }
+    }
 
     if (lowerMessage.includes('chest pain') || lowerMessage.includes('heart') || lowerMessage.includes('emergency')) {
        return {
