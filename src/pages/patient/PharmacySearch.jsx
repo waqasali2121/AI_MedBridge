@@ -156,6 +156,8 @@ export function PharmacySearch() {
             {results.map((item) => {
               const isAvailable = item.stock_status === 'available'
               const isOut = item.stock_status === 'out_of_stock'
+              
+              const isStale = item.last_updated?.includes('hour') || item.last_updated?.includes('day')
 
               return (
                 <Card
@@ -176,9 +178,16 @@ export function PharmacySearch() {
                           <span className="truncate max-w-[210px]">{item.pharmacy_address}</span>
                         </p>
                       </div>
-                      <Badge variant={isAvailable ? 'success' : isOut ? 'danger' : 'warning'}>
-                        {isAvailable ? 'In Stock' : isOut ? 'Out of Stock' : 'Low Stock'}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant={isAvailable ? 'success' : isOut ? 'danger' : 'warning'}>
+                          {isAvailable ? 'Reported Stock' : isOut ? 'Reported Out' : 'Reported Low'}
+                        </Badge>
+                        {isStale && (
+                          <Badge variant="danger" className="bg-rose-50 text-rose-700 text-[9px] px-1.5 py-0 border-rose-200">
+                            STALE
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
                     <div className="p-3 bg-slate-50 rounded-xl space-y-1.5 border border-slate-100 text-xs">

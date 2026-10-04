@@ -52,7 +52,7 @@ export function PharmacistPrescriptions() {
                   </Badge>
                 </div>
                 <p className="text-xs text-slate-600">
-                  {rx.original_file_name} • Extracted: {rx.medicines?.map(m => m.medicine_name.split(' ')[0]).join(', ')}
+                  {rx.original_file_name} • Extracted: {rx.medicines?.map(m => (m.medicine_name_field?.value || m.medicine_name || 'Unknown').split(' ')[0]).join(', ')}
                 </p>
                 <p className="text-[11px] text-slate-400">
                   Uploaded {new Date(rx.uploaded_at).toLocaleString()} • Physician: {rx.doctor_name}

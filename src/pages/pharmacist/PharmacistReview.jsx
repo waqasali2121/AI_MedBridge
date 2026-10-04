@@ -54,15 +54,14 @@ export function PharmacistReview() {
     )
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async (status) => {
     setSubmitting(true)
     try {
       await prescriptionService.submitPharmacistReview({
         prescriptionId: id,
         pharmacistId: user?.id,
         pharmacistNotes: counsellingNotes,
-        verificationStatus: 'pending_doctor' // Escalates to doctor gate!
+        verificationStatus: status
       })
 
       setSuccess(true)
@@ -188,13 +187,19 @@ export function PharmacistReview() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-xs text-slate-900">{med.medicine_name}</span>
-                          <span className="text-[11px] text-slate-500">({med.dose}, {med.frequency})</span>
+                          <span className="font-bold text-xs text-slate-900">{med.medicine_name_field?.value || med.medicine_name}</span>
+                          <span className="text-[11px] text-slate-500">
+                            (Dose: {med.dose_field?.value || med.dose}, Freq: {med.frequency_field?.value || med.frequency})
+                          </span>
                         </div>
 
-                        {med.clarification_required && (
-                          <div className="text-[11px] font-semibold text-amber-900 bg-amber-100/80 p-2 rounded border border-amber-200">
-                            ⚠ Flagged: {med.clarification_reason}
+                        {/* Display field-level OCR confidence warning */}
+                        {(med.dose_field?.requires_review || med.medicine_name_field?.requires_review || med.clarification_required) && (
+                          <div className="text-[11px] font-semibold text-amber-900 bg-amber-100/80 p-2 rounded border border-amber-200 flex flex-col gap-1">
+                            <span className="flex items-center gap-1">⚠ <strong>Review Required:</strong> {med.clarification_reason}</span>
+                            <span className="text-[10px] text-amber-800">
+                              Dose Confidence: {med.dose_field?.confidence ?? 'N/A'}% | Freq Confidence: {med.frequency_field?.confidence ?? 'N/A'}%
+                            </span>
                           </div>
                         )}
 
@@ -221,20 +226,27 @@ export function PharmacistReview() {
             </div>
 
             {/* Pharmacist Counselling & Verification Notes */}
-            <form onSubmit={handleSubmit} className="space-y-4 pt-2 border-t border-slate-100">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit('pending_doctor') }} className="space-y-4 pt-2 border-t border-slate-100">
               <Textarea
                 label="Pharmacist Clinical Notes & Recommendation for Doctor"
                 rows={4}
                 value={counsellingNotes}
                 onChange={(e) => setCounsellingNotes(e.target.value)}
-                helperText="Document your assessment on drug interactions, formulation correctness, and dosage escalation for Dr. Ali Raza Naqvi."
+                helperText="Document your assessment on drug interactions, formulation correctness, and DO NOT guess missing dosages. Flag for Doctor if needed."
                 required
               />
+
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-start gap-2.5 mb-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div className="leading-relaxed">
+                  <strong>Patient Safety Rule:</strong> AI extracted fields with LOW confidence (marked UNKNOWN) must be escalated to the physician for clarification. Do not silently transform uncertain OCR into a medication instruction.
+                </div>
+              </div>
 
               {success ? (
                 <div className="p-3 bg-emerald-100 border border-emerald-300 text-emerald-900 rounded-lg text-xs font-semibold flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                  <span>Review recorded! Forwarded to Dr. Ali Raza Naqvi for final approval.</span>
+                  <span>Review recorded! Forwarded successfully.</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-end gap-2 pt-2">
@@ -244,7 +256,10 @@ export function PharmacistReview() {
                     </Button>
                   </Link>
                   <Button type="submit" loading={submitting} icon={Send} className="bg-teal-700 hover:bg-teal-800">
-                    Submit Pharmacist Review & Forward to Doctor
+                    Escalate & Forward to Doctor
+                  </Button>
+                  <Button type="button" onClick={() => handleSubmit('approved')} className="bg-emerald-600 hover:bg-emerald-700">
+                    Approve Routine Plan
                   </Button>
                 </div>
               )}

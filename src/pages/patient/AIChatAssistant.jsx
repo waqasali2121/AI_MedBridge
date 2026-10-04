@@ -55,46 +55,25 @@ export function AIChatAssistant() {
         isWarning: response.text.includes('⚠️')
       }
       
+      if (response.escalationType) {
+        // Automatically create the case based on P0 safety rules
+        const newCase = await caseService.openCase({
+          patientId: user?.id,
+          patientName: user?.full_name,
+          concernType: response.concernType,
+          symptomsChanged: newMsg.text,
+          isUrgent: response.escalationType === 'doctor'
+        })
+        
+        botMsg.text = `${response.text}\n\n**Your question has been automatically sent for medication-support review.**\n- Case ID: ${newCase.id}\n- Status: Awaiting ${response.escalationType === 'doctor' ? 'Physician' : 'Pharmacist'} Review`
+        botMsg.isWarning = true
+      }
+      
       setMessages(prev => [...prev, botMsg])
       
-      if (response.escalationType) {
-        setEscalationData({
-          type: response.escalationType, // 'doctor' | 'pharmacist'
-          concernType: response.concernType,
-          originalMessage: newMsg.text
-        })
-      }
     } catch (err) {
       console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleEscalate = async () => {
-    if (!escalationData) return
-    setLoading(true)
-    try {
-      await caseService.openCase({
-        patientId: user?.id,
-        patientName: user?.full_name,
-        concernType: escalationData.concernType,
-        symptomsChanged: escalationData.originalMessage,
-        isUrgent: escalationData.type === 'doctor'
-      })
-      
-      setMessages(prev => [
-        ...prev,
-        {
-          id: Date.now(),
-          sender: 'ai',
-          text: `✅ I have successfully created a case and forwarded your inquiry to your ${escalationData.type}. You will be notified when they review it.`
-        }
-      ])
-      setEscalationData(null)
-    } catch (err) {
-      console.error(err)
-      alert("Failed to escalate. Please try again.")
+      setMessages(prev => [...prev, { id: Date.now(), sender: 'ai', text: 'Sorry, I encountered an error. Please try again.', isWarning: true }])
     } finally {
       setLoading(false)
     }
@@ -162,33 +141,7 @@ export function AIChatAssistant() {
           </div>
         )}
         
-        {/* Escalation Prompt Widget */}
-        {escalationData && (
-          <div className="flex justify-center my-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white dark:bg-slate-800 border-2 border-indigo-200 dark:border-indigo-800 rounded-xl p-5 shadow-lg w-full max-w-sm text-center space-y-4">
-               <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center justify-center gap-2">
-                 {escalationData.type === 'doctor' ? <Stethoscope className="w-5 h-5 text-rose-500" /> : <BriefcaseMedical className="w-5 h-5 text-amber-500" />}
-                 This question requires professional review
-               </h4>
-               <p className="text-sm text-slate-600 dark:text-slate-400">
-                 As an AI, I cannot provide diagnostic decisions or alter your treatment plan independently.
-               </p>
-               <div className="flex flex-col gap-2 pt-2">
-                  <Button 
-                    variant={escalationData.type === 'doctor' ? 'danger' : 'primary'}
-                    onClick={handleEscalate}
-                    loading={loading}
-                    className="w-full"
-                  >
-                     Ask {escalationData.type === 'doctor' ? 'Doctor' : 'Pharmacist'}
-                  </Button>
-                  <Button variant="outline" onClick={() => setEscalationData(null)} disabled={loading} className="w-full">
-                     Cancel
-                  </Button>
-               </div>
-            </div>
-          </div>
-        )}
+
         
         <div ref={messagesEndRef} />
       </div>

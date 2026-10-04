@@ -31,90 +31,76 @@ export class MockPrescriptionExtractor {
         extractedText = ''; // Fallback
       }
     } else if (file.type === 'application/pdf') {
-       // Mock or placeholder for PDF since Tesseract cannot directly read PDF files in browser without conversion
        extractedText = 'Extracted Text from PDF Placeholder\nPlease note that browser PDF OCR requires server-side rendering.';
     }
 
     const state = getAppState();
     const allMeds = state.medicines || [];
-
     let identifiedMeds = [];
 
     // Attempt to match text against known medicines
     if (extractedText) {
       const lowerText = extractedText.toLowerCase();
-
+      let matchedOne = false;
       for (const m of allMeds) {
         if (
           (m.brand_name && lowerText.includes(m.brand_name.toLowerCase())) ||
           (m.active_ingredient && lowerText.includes(m.active_ingredient.toLowerCase()))
         ) {
+          matchedOne = true;
+          // Demonstrate field-level confidence (P0 Target)
           identifiedMeds.push({
             id: `med-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            medicine_name: m.product_name || m.brand_name,
+            medicine_name_field: { value: m.product_name, confidence: 95 },
             brand_name: m.brand_name,
             active_ingredient: m.active_ingredient,
-            strength: m.strength,
-            dosage_form: m.dosage_form,
-            route: m.route,
-            dose: '1 unit', // Default fallback
-            frequency: 'Consult Physician',
-            duration: 'Continuous',
-            food_instruction: 'As directed',
-            special_instruction: 'Assistive draft: Verify dose.',
-            urdu_instruction: 'براہ کرم ڈاکٹر سے رجوع کریں۔',
-            extracted_confidence: 0.85,
+            strength_field: { value: m.strength, confidence: 91 },
+            dosage_form_field: { value: m.dosage_form, confidence: 92 },
+            route_field: { value: m.route, confidence: 88 },
+            dose_field: { value: 'UNKNOWN', confidence: 45, requires_review: true }, // Not guessing
+            frequency_field: { value: 'UNKNOWN', confidence: 30, requires_review: true },
+            duration_field: { value: 'UNKNOWN', confidence: 20, requires_review: true },
             clarification_required: true,
-            clarification_reason: 'Draft requires validation of exact dose and frequency by a pharmacist.'
+            clarification_reason: 'Low confidence in dose and frequency. Do not guess.'
           });
         }
       }
 
-      // If no inventory matches, use the raw text lines as real data instead of mock training data!
-      if (identifiedMeds.length === 0) {
-        const lines = extractedText.split('\n').map(l => l.trim()).filter(l => l.length > 2).slice(0, 5);
+      if (!matchedOne) {
+        // Did not match anything in DB, treat as raw text with low confidence
+        const lines = extractedText.split('\n').map(l => l.trim()).filter(l => l.length > 2).slice(0, 3);
         for (const line of lines) {
           identifiedMeds.push({
             id: `med-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            medicine_name: line, // REAL extracted data
+            medicine_name_field: { value: line, confidence: 60, requires_review: true },
             brand_name: 'Unknown',
             active_ingredient: 'Unknown',
-            strength: 'Unknown',
-            dosage_form: 'Unknown',
-            route: 'Unknown',
-            dose: 'TBD',
-            frequency: 'TBD',
-            duration: 'TBD',
-            food_instruction: '',
-            special_instruction: 'Raw OCR extract.',
-            urdu_instruction: '',
-            extracted_confidence: 0.50,
+            strength_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+            dosage_form_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+            route_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+            dose_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+            frequency_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+            duration_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
             clarification_required: true,
-            clarification_reason: 'Raw text extracted from image. Pharmacist must verify and correctly link to inventory.'
+            clarification_reason: 'Raw text extracted from image with very low confidence.'
           });
         }
       }
     }
 
-    // No hardcoded "training data" fallback anymore!
+    // Completely unreadable or no text
     if (identifiedMeds.length === 0) {
         identifiedMeds.push({
               id: `med-${Date.now()}-err`,
-              medicine_name: 'No readable text found',
-              brand_name: 'Unknown',
-              active_ingredient: 'Unknown',
-              strength: 'N/A',
-              dosage_form: 'N/A',
-              route: 'N/A',
-              dose: 'N/A',
-              frequency: 'N/A',
-              duration: 'N/A',
-              food_instruction: 'N/A',
-              special_instruction: 'The uploaded document contained no readable medication text.',
-              urdu_instruction: '',
-              extracted_confidence: 0.0,
+              medicine_name_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+              strength_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+              dosage_form_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+              route_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+              dose_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+              frequency_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
+              duration_field: { value: 'UNKNOWN', confidence: 0, requires_review: true },
               clarification_required: true,
-              clarification_reason: 'Pharmacist manual entry required. Image may be unreadable or blank.'
+              clarification_reason: 'No readable text found. Manual entry required.'
         });
     }
 

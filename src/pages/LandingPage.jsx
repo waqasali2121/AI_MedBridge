@@ -1,17 +1,17 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  Activity,
   ArrowRight,
-  CheckCircle2,
-  FileCheck2,
-  Lock,
-  Pill,
-  ShieldAlert,
-  Sparkles,
+  ShieldCheck,
+  PlayCircle,
+  FileText,
+  UserCheck,
   Stethoscope,
   Store,
-  Users
+  CheckCircle,
+  BellRing,
+  AlertOctagon,
+  Sparkles
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -23,211 +23,182 @@ export function LandingPage() {
   const { t, language } = useLanguage()
   const navigate = useNavigate()
 
-  const handleDemoLaunch = async (targetRole) => {
-    await switchRole(targetRole)
-    navigate(getRoleDashboardRoute(targetRole))
+  const handleDemoLaunch = async () => {
+    // Launch as Patient to start the journey
+    await switchRole('patient')
+    navigate('/patient/prescriptions/new')
   }
 
   return (
-    <div className="space-y-12 max-w-6xl mx-auto py-6">
-      {/* Hero Section */}
-      <section className="text-center space-y-6 pt-4 pb-8">
+    <div className="space-y-16 max-w-6xl mx-auto py-6 px-4">
+      
+      {/* 1. HERO - Problem + Solution */}
+      <section className="text-center space-y-6 pt-8 pb-4">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-semibold shadow-xs">
-          <Sparkles className="w-4 h-4 text-emerald-600" />
-          <span>Bilingual Healthcare Innovation • اردو اور انگریزی</span>
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span>SYNTHETIC DEMO DATA • NOT FOR REAL CLINICAL USE</span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
-          One Verified Medication Plan.{' '}
-          <span className="text-emerald-600 underline decoration-emerald-300 decoration-wavy">
-            One Connected Journey.
-          </span>
+          MedBridge connects the entire medication journey.
         </h1>
 
-        <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-600 leading-relaxed">
-          MedBridge connects patients, physicians, and care pharmacists into a unified, verified loop — turning illegible or complex prescriptions into understandable bilingual instructions, verified community pharmacy stock, and coordinated follow-up.
+        <p className="max-w-3xl mx-auto text-base sm:text-lg text-slate-600 leading-relaxed">
+          From prescription to safe medication use and follow-up. 
+          Upload a prescription. MedBridge extracts the medication information, a care pharmacist verifies it and provides counselling, clinical ambiguities are escalated to the physician when necessary, patients receive approved medication instructions and reminders, pharmacies help locate and reserve medicines, and the care team can follow up on adherence and medication concerns.
         </p>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          {user ? (
+        {/* Primary CTA */}
+        <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+          <Button size="lg" icon={PlayCircle} onClick={handleDemoLaunch} className="shadow-lg shadow-emerald-500/20">
+            Run Demo Journey (3 Mins)
+          </Button>
+          {!user && (
+            <Link to="/login">
+              <Button size="lg" variant="outline" className="bg-white">
+                Platform Login
+              </Button>
+            </Link>
+          )}
+          {user && (
             <Link to={getRoleDashboardRoute(role)}>
-              <Button size="lg" icon={ArrowRight}>
+              <Button size="lg" variant="outline" icon={ArrowRight} className="bg-white">
                 Enter {role?.replace('_', ' ').toUpperCase()} Portal
               </Button>
             </Link>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button size="lg" icon={ArrowRight}>
-                  Sign In to MedBridge
-                </Button>
-              </Link>
-              <Link to="/patient/prescriptions/new">
-                <Button size="lg" variant="outline" icon={Pill}>
-                  Try Prescription Upload
-                </Button>
-              </Link>
-            </>
           )}
         </div>
+        
+        <p className="text-xs text-slate-400 font-medium pt-2">
+          Experience the medication journey as a patient, pharmacist, and physician.
+        </p>
       </section>
 
-      {/* Interactive 1-Click Role Portals */}
-      <section className="space-y-4">
-        <div className="text-center space-y-1">
-          <h2 className="text-xl font-bold text-slate-900">
-            Explore MedBridge Portals (1-Click Demo)
-          </h2>
-          <p className="text-xs text-slate-500">
-            Switch between the 5 roles instantly with preloaded synthetic clinical data
+      {/* 2. THE MEDICATION JOURNEY */}
+      <section className="space-y-8">
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-bold text-slate-900">The Complete Journey</h2>
+          <p className="text-slate-500 max-w-xl mx-auto">One seamless path ensuring nothing is missed between writing a prescription and completing a course of treatment.</p>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 max-w-5xl mx-auto relative">
+          {/* Connecting line for desktop */}
+          <div className="hidden md:block absolute top-[45%] left-8 right-8 h-1 bg-slate-100 -z-10 rounded-full" />
+          
+          {[
+            { label: 'PRESCRIBED', icon: FileText, color: 'emerald' },
+            { label: 'VERIFIED', icon: UserCheck, color: 'teal' },
+            { label: 'UNDERSTOOD', icon: Sparkles, color: 'blue' },
+            { label: 'FOUND', icon: Store, color: 'amber' },
+            { label: 'TAKEN', icon: CheckCircle, color: 'green' },
+            { label: 'FOLLOWED UP', icon: Stethoscope, color: 'purple' },
+          ].map((step, idx) => (
+            <div key={idx} className="flex flex-col items-center gap-3">
+              <div className={`w-14 h-14 bg-${step.color}-50 border-2 border-${step.color}-200 text-${step.color}-600 rounded-full flex items-center justify-center relative overflow-hidden group hover:scale-110 transition-transform bg-white`}>
+                <step.icon className="w-6 h-6 relative z-10" />
+                <div className={`absolute inset-0 bg-${step.color}-100 opacity-0 group-hover:opacity-100 transition-opacity`} />
+              </div>
+              <span className="text-xs font-bold text-slate-700 tracking-wider tooltip">{step.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. ROLES EXPERIENCE (HOW IT WORKS) */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        <Card className="p-6 border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg"><UserCheck className="w-5 h-5" /></div>
+            <h3 className="text-lg font-bold text-slate-900">Care Pharmacist Workflow</h3>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Acts as the primary care coordinator. Verifies uncertain AI extractions, translates technical directions into simple bilingual instructions, provides counselling, and manages routine patient inquiries.
           </p>
-        </div>
+        </Card>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-          <Card
-            hover
-            onClick={() => handleDemoLaunch('patient')}
-            className="cursor-pointer border-emerald-200/80 hover:border-emerald-500 bg-gradient-to-b from-white to-emerald-50/20 text-center space-y-2 p-4"
-          >
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center mx-auto">
-              <Users className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Patient Portal</h3>
-            <p className="text-xs text-slate-500">
-              Upload prescription, view approved Urdu instructions, record doses, find stock.
-            </p>
-            <span className="text-xs font-semibold text-emerald-600 block pt-1">
-              Launch as Shahid →
-            </span>
-          </Card>
-
-          <Card
-            hover
-            onClick={() => handleDemoLaunch('doctor')}
-            className="cursor-pointer border-blue-200/80 hover:border-blue-500 bg-gradient-to-b from-white to-blue-50/20 text-center space-y-2 p-4"
-          >
-            <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center mx-auto">
-              <Stethoscope className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Physician Gate</h3>
-            <p className="text-xs text-slate-500">
-              Review pharmacist notes, resolve unclear orders, approve official clinical plans.
-            </p>
-            <span className="text-xs font-semibold text-blue-600 block pt-1">
-              Launch as Dr. Ali →
-            </span>
-          </Card>
-
-          <Card
-            hover
-            onClick={() => handleDemoLaunch('pharmacist')}
-            className="cursor-pointer border-teal-200/80 hover:border-teal-500 bg-gradient-to-b from-white to-teal-50/20 text-center space-y-2 p-4"
-          >
-            <div className="w-12 h-12 bg-teal-100 text-teal-700 rounded-xl flex items-center justify-center mx-auto">
-              <FileCheck2 className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Care Pharmacist</h3>
-            <p className="text-xs text-slate-500">
-              Verify transcription details, add counselling, triage patient adherence inquiries.
-            </p>
-            <span className="text-xs font-semibold text-teal-600 block pt-1">
-              Launch as Zainab →
-            </span>
-          </Card>
-
-          <Card
-            hover
-            onClick={() => handleDemoLaunch('pharmacy_operator')}
-            className="cursor-pointer border-amber-200/80 hover:border-amber-500 bg-gradient-to-b from-white to-amber-50/20 text-center space-y-2 p-4"
-          >
-            <div className="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center mx-auto">
-              <Store className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Pharmacy Operator</h3>
-            <p className="text-xs text-slate-500">
-              Report verified physical inventory, confirm or reject patient reservations.
-            </p>
-            <span className="text-xs font-semibold text-amber-600 block pt-1">
-              Launch as Usman →
-            </span>
-          </Card>
-
-          <Card
-            hover
-            onClick={() => handleDemoLaunch('admin')}
-            className="cursor-pointer border-purple-200/80 hover:border-purple-500 bg-gradient-to-b from-white to-purple-50/20 text-center space-y-2 p-4"
-          >
-            <div className="w-12 h-12 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center mx-auto">
-              <Activity className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900">Admin & Audits</h3>
-            <p className="text-xs text-slate-500">
-              Inspect immutable audit trail, catalogue, pharmacies, and system metrics.
-            </p>
-            <span className="text-xs font-semibold text-purple-600 block pt-1">
-              Launch as Admin →
-            </span>
-          </Card>
-        </div>
-      </section>
-
-      {/* The 8-Step Collaborative Care Loop */}
-      <section className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6">
-        <div className="space-y-1">
-          <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-            System Design & Workflow
-          </span>
-          <h2 className="text-2xl font-bold text-slate-900">
-            The MedBridge Closed-Loop Medication Care Engine
-          </h2>
-          <p className="text-xs text-slate-500 max-w-2xl">
-            Reminders alone don't solve medication non-adherence. MedBridge coordinates patient, doctor, and pharmacist around verified clinical facts.
+        <Card className="p-6 border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2.5 bg-rose-50 text-rose-600 rounded-lg"><AlertOctagon className="w-5 h-5" /></div>
+            <h3 className="text-lg font-bold text-slate-900">Physician Escalation</h3>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Physicians only review cases that require prescriber-level clinical authority. Unreadable doses, potential interactions or therapy changes enter a focused 'Review → Resolve → Approve' queue.
           </p>
+        </Card>
+
+        <Card className="p-6 border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg"><BellRing className="w-5 h-5" /></div>
+            <h3 className="text-lg font-bold text-slate-900">Patient Experience</h3>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            An action-oriented dashboard showing EXACTLY what to take today, when to take it, and what actions are pending. Empowers patients to record adherence securely.
+          </p>
+        </Card>
+
+        <Card className="p-6 border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2.5 bg-amber-50 text-amber-600 rounded-lg"><Store className="w-5 h-5" /></div>
+            <h3 className="text-lg font-bold text-slate-900">Pharmacy Reservation</h3>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Patients search verified reported stock and request reservations. Pharmacy operators physically confirm availability, ensuring patients never make a wasted trip.
+          </p>
+        </Card>
+      </section>
+
+      {/* 4. AI SAFETY LIMITS */}
+      <section className="bg-slate-900 rounded-3xl p-8 sm:p-10 text-white shadow-xl max-w-5xl mx-auto overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <ShieldCheck className="w-48 h-48" />
         </div>
+        <div className="relative z-10 max-w-2xl space-y-5">
+          <span className="text-xs font-extrabold text-emerald-400 tracking-widest uppercase">Clinical Safety Policy</span>
+          <h2 className="text-2xl sm:text-3xl font-bold">Strict AI Boundaries</h2>
+          <p className="text-slate-300 leading-relaxed text-sm sm:text-base">
+            MedBridge uses assistive AI, not autonomous doctors. Our AI strictly CANNOT: diagnose diseases, recommend new medicines, change dosages, or invent medication information. 
+            When AI confidence is low, the workflow <strong>automatically halts</strong> for Care Pharmacist review.
+          </p>
+          <ul className="text-slate-400 text-sm space-y-2 pt-2">
+            <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Never silently guesses unreadable text</li>
+            <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Answers patient questions using only approved facts</li>
+            <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" /> Immutable AI and human audit trail</li>
+          </ul>
+        </div>
+      </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-xs">
-              01
-            </div>
-            <h4 className="font-bold text-sm text-slate-900">Prescription Upload & Draft</h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Patient uploads prescription image or PDF. Assistive AI parses structured draft without guessing missing information.
-            </p>
+      {/* 5. METRICS / IMPACT */}
+      <section className="max-w-4xl mx-auto text-center space-y-6 pt-4">
+        <h3 className="text-xl font-bold text-slate-900">Projected System Impact Targets</h3>
+        <p className="text-xs text-slate-500 pb-2">These are target metrics for the pilot program, not yet validated clinical outcomes.</p>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="space-y-1">
+            <div className="text-3xl font-black text-emerald-600">85%</div>
+            <div className="text-xs font-semibold text-slate-700">Fewer Wasted Trips</div>
           </div>
-
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 font-bold flex items-center justify-center text-xs">
-              02
-            </div>
-            <h4 className="font-bold text-sm text-slate-900">Care Pharmacist Check</h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Pharmacist verifies drug names, dosage forms, and interactions, adding bilingual counselling notes before escalation.
-            </p>
+          <div className="space-y-1">
+            <div className="text-3xl font-black text-emerald-600">&lt;2h</div>
+            <div className="text-xs font-semibold text-slate-700">Prescription Verification</div>
           </div>
-
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">
-              03
-            </div>
-            <h4 className="font-bold text-sm text-slate-900">Doctor Clinical Gate</h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Doctor resolves flagged ambiguities and officially approves plan. <strong>Only doctor approval activates reminders.</strong>
-            </p>
+          <div className="space-y-1">
+            <div className="text-3xl font-black text-emerald-600">3x</div>
+            <div className="text-xs font-semibold text-slate-700">Adherence Reporting</div>
           </div>
-
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 font-bold flex items-center justify-center text-xs">
-              04
-            </div>
-            <h4 className="font-bold text-sm text-slate-900">Pharmacy Reservation</h4>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Patient views reported availability with freshness timestamps and places a reservation request before travelling.
-            </p>
+          <div className="space-y-1">
+            <div className="text-3xl font-black text-emerald-600">100%</div>
+            <div className="text-xs font-semibold text-slate-700">Auditable Changes</div>
           </div>
         </div>
       </section>
+
+      {/* Bottom CTA */}
+      <div className="flex justify-center pt-8 pb-12">
+        <Button size="lg" icon={PlayCircle} onClick={handleDemoLaunch} className="shadow-lg shadow-emerald-500/20 px-8 py-4 text-lg">
+          Experience the Medication Journey
+        </Button>
+      </div>
+
     </div>
   )
 }

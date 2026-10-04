@@ -108,10 +108,20 @@ export const prescriptionService = {
     const index = (state.prescriptions || []).findIndex(p => p.id === prescriptionId)
     if (index === -1) throw new Error('Prescription not found.')
 
+    // Clear clarification flags if pharmacist resolves them
+    const resolvedMedicines = (state.prescriptions[index].medicines || []).map(m => ({
+      ...m,
+      clarification_required: false,
+      clarification_reason: null
+    }))
+
+    const finalStatus = verificationStatus || 'pending_doctor'
+
     const updated = {
       ...state.prescriptions[index],
+      medicines: resolvedMedicines,
       pharmacist_notes: pharmacistNotes,
-      verification_status: verificationStatus || 'pending_doctor',
+      verification_status: finalStatus,
       pharmacist_reviewed_at: new Date().toISOString(),
       pharmacist_id: pharmacistId
     }
@@ -119,26 +129,53 @@ export const prescriptionService = {
     state.prescriptions[index] = updated
     saveAppState(state)
 
-    // Audit log
-    await auditService.logAction({
-      userId: pharmacistId,
-      userRole: 'pharmacist',
-      action: 'Pharmacist Review Submitted',
-      entityType: 'prescription',
-      entityId: prescriptionId,
-      details: `Pharmacist reviewed draft. Notes: "${pharmacistNotes}". Forwarded to Doctor.`
-    })
+    if (finalStatus === 'approved') {
+      // Automate routine approval bypassing doctor!
+      const activePlan = await medicationService.createPlanFromPrescription({
+        prescription: updated,
+        doctorId: pharmacistId // Pharmacist acted as final authority
+      })
 
-    // Notify Doctor
-    await notificationService.notify({
-      userId: 'user-doc-01',
-      type: 'prescription_doctor_approval',
-      title: 'Prescription Ready for Final Approval',
-      message: `Pharmacist has verified prescription for ${updated.patient_name}. Awaiting doctor clinical approval.`,
-      linkUrl: `/doctor/prescriptions`
-    })
+      await auditService.logAction({
+        userId: pharmacistId,
+        userRole: 'pharmacist',
+        action: 'Pharmacist Approved Routine Treatment',
+        entityType: 'prescription',
+        entityId: prescriptionId,
+        details: `Pharmacist verified and activated routine prescription (v${activePlan.version}). Reminders activated.`
+      })
 
-    return updated
+      // Notify Patient directly
+      await notificationService.notify({
+        userId: updated.patient_id,
+        type: 'plan_approved',
+        title: 'Medication Plan Approved!',
+        message: `Your Care Pharmacist has verified and activated your medication plan. Your schedule and reminders are now active.`,
+        linkUrl: `/patient/medications`
+      })
+
+      return updated
+    } else {
+      // Escalated to doctor
+      await auditService.logAction({
+        userId: pharmacistId,
+        userRole: 'pharmacist',
+        action: 'Pharmacist Review Submitted',
+        entityType: 'prescription',
+        entityId: prescriptionId,
+        details: `Pharmacist reviewed draft. Notes: "${pharmacistNotes}". Forwarded to Doctor.`
+      })
+
+      await notificationService.notify({
+        userId: 'user-doc-01',
+        type: 'prescription_doctor_approval',
+        title: 'Prescription Ready for Final Approval',
+        message: `Pharmacist escalated a prescription for ${updated.patient_name} requiring doctor clinical approval.`,
+        linkUrl: `/doctor/prescriptions`
+      })
+
+      return updated
+    }
   },
 
   /**

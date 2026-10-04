@@ -21,6 +21,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { medicationService } from '../../services/medicationService'
 import { prescriptionService } from '../../services/prescriptionService'
+import { pharmacyService } from '../../services/pharmacyService'
+import { caseService } from '../../services/caseService'
 import { Button } from '../../components/common/Button'
 import { Card } from '../../components/common/Card'
 import { Badge } from '../../components/common/Badge'
@@ -34,6 +36,8 @@ export function PatientDashboard() {
   const [schedules, setSchedules] = useState([])
   const [prescriptions, setPrescriptions] = useState([])
   const [logs, setLogs] = useState([])
+  const [reservations, setReservations] = useState([])
+  const [cases, setCases] = useState([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState({})
   const [teachBackOpen, setTeachBackOpen] = useState(false)
@@ -44,11 +48,15 @@ export function PatientDashboard() {
       const sched = await medicationService.getPatientSchedules(user?.id)
       const rxList = await prescriptionService.getPrescriptionsByPatient(user?.id)
       const adherenceLogs = await medicationService.getMedicationLogs(user?.id)
+      const rs = await pharmacyService.getPatientReservations(user?.id)
+      const cs = await caseService.getPatientCases(user?.id)
 
       setActivePlan(plan)
       setSchedules(sched)
       setPrescriptions(rxList)
       setLogs(adherenceLogs)
+      setReservations(rs)
+      setCases(cs.filter(c => c.status !== 'resolved'))
     } catch (err) {
       console.error('Error loading patient dashboard data:', err)
     } finally {
@@ -128,7 +136,7 @@ export function PatientDashboard() {
             </Badge>
           </div>
           <p className="text-xs text-amber-800 leading-relaxed">
-            Assistive AI extracted 3 medications from your prescription. One field has been flagged for doctor clarification. Reminders and active schedules will automatically activate once Dr. Ali Raza Naqvi reviews and approves the plan.
+            Your uploaded prescription is actively being verified by your Care Team. To ensure your safety, AI extracted drafts are manually checked. Routine plans will be activated by your Care Pharmacist, while complex cases are escalated to Dr. Ali Raza Naqvi.
           </p>
           <div className="pt-1 flex items-center gap-3 text-xs">
             <Link to={`/patient/prescriptions/${latestRx.id}`} className="font-bold text-amber-900 underline">
@@ -196,6 +204,47 @@ export function PatientDashboard() {
             </div>
           )}
         </div>
+
+        {/* Pending Actions / Enquiries Section */}
+        {(reservations.length > 0 || cases.length > 0) && (
+          <div className="space-y-4 pt-6">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 border-b-2 border-emerald-500 pb-2 inline-block">
+               What is Pending?
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {reservations.map(res => (
+                <Card key={res.id} className="p-4 border-l-4 border-l-amber-500 bg-amber-50/50">
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-bold text-amber-900">Pharmacy Reservation</h4>
+                      <Badge variant={res.status === 'confirmed' ? 'success' : 'warning'}>
+                        {res.status === 'confirmed' ? 'Reserved' : 'Reservation Requested'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm font-semibold">{res.medicine_name}</p>
+                    <p className="text-xs text-amber-800">At {res.pharmacy_name}</p>
+                    {res.status === 'confirmed' && (
+                      <p className="text-xs font-bold text-rose-600 mt-2">Expires: {new Date(res.expiry_at).toLocaleTimeString()}</p>
+                    )}
+                  </div>
+                </Card>
+              ))}
+
+              {cases.map(c => (
+                <Card key={c.id} className="p-4 border-l-4 border-l-indigo-500 bg-indigo-50/50">
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-bold text-indigo-900">Care Inquiry</h4>
+                      <Badge variant="clarification">Open</Badge>
+                    </div>
+                    <p className="text-sm font-semibold capitalize">{c.concern_type.replace('_', ' ')}</p>
+                    <p className="text-xs text-indigo-800 truncate">{c.symptoms_changed}</p>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 6 Massive Navigation Buttons */}
         <div className="pt-8">

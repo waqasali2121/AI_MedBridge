@@ -15,8 +15,9 @@ export function DoctorPrescriptions() {
   useEffect(() => {
     async function load() {
       try {
-        const rxs = await prescriptionService.getAllPrescriptions()
-        setPrescriptions(rxs)
+        const escalations = rxs.filter(p => p.verification_status === 'pending_doctor' || p.verification_status === 'needs_clarification')
+        const approved = rxs.filter(p => p.verification_status === 'approved')
+        setPrescriptions([...escalations, ...approved])
       } finally {
         setLoading(false)
       }
@@ -55,7 +56,7 @@ export function DoctorPrescriptions() {
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-600">
-                    {rx.original_file_name} • Extracted: {rx.medicines?.map(m => m.medicine_name.split(' ')[0]).join(', ')}
+                    {rx.original_file_name} • Extracted: {rx.medicines?.map(m => (m.medicine_name_field?.value || m.medicine_name || 'Unknown').split(' ')[0]).join(', ')}
                   </p>
                   <p className="text-[11px] text-slate-400">
                     Uploaded: {new Date(rx.uploaded_at).toLocaleString()} • Clinic: {rx.clinic_name}

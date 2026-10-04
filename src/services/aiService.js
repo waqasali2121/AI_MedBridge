@@ -6,25 +6,25 @@ export const aiService = {
     // Simulate thinking delay
     await new Promise(resolve => setTimeout(resolve, 800))
 
-    if (lowerMessage.includes('after breakfast') || lowerMessage.includes('meal') || lowerMessage.includes('food')) {
+    if (lowerMessage.includes('chest pain') || lowerMessage.includes('heart') || lowerMessage.includes('emergency')) {
        return {
-         text: "According to your uploaded prescriptions and pharmacist counselling, your medications generally come with specific food instructions. However, changes to meal timing might require clinical review. Would you like me to create a case for a pharmacist to review?",
-         escalationType: 'pharmacist',
-         concernType: 'other'
-       }
-    }
-    
-    if (lowerMessage.includes('side effect') || lowerMessage.includes('pain') || lowerMessage.includes('dizzy') || lowerMessage.includes('nausea') || lowerMessage.includes('vomit') || lowerMessage.includes('emergency')) {
-       return {
-         text: "⚠️ **This may require urgent medical attention.** Please contact emergency medical services or seek immediate medical care if you are experiencing severe symptoms. I cannot diagnose you. Would you like me to escalate this to your physician for review?",
+         text: "⚠️ **I cannot safely answer this question without review from your care team.**\n\nFor symptoms like chest pain, this requires immediate, urgent clinical triage. Please contact emergency services immediately or proceed to the nearest emergency room.",
          escalationType: 'doctor',
-         concernType: 'suspected_side_effect'
+         concernType: 'urgent_symptom'
        }
     }
     
-    if (lowerMessage.includes('miss') || lowerMessage.includes('forget')) {
+    if (lowerMessage.includes('what medicine') || lowerMessage.includes('should i take') || lowerMessage.includes('prescribe')) {
        return {
-         text: "If you missed a dose, typically you should not double the next dose. However, different medications have different rules. Should I refer this question to your pharmacist for proper guidance?",
+         text: "⚠️ **I cannot recommend or prescribe medications.**\n\nI can only answer questions about medications that have been officially approved on your MedBridge plan. Your question has been flagged for medical review.",
+         escalationType: 'doctor',
+         concernType: 'medication_change'
+       }
+    }
+    
+    if (lowerMessage.includes('double') || lowerMessage.includes('miss') || lowerMessage.includes('forget')) {
+       return {
+         text: "⚠️ **I cannot safely provide missed-dose instructions without validated drug-specific guidance.**\n\nPlease contact your care pharmacist for proper guidance on whether to skip or take your missed dose.",
          escalationType: 'pharmacist',
          concernType: 'missed_doses'
        }
@@ -32,23 +32,24 @@ export const aiService = {
 
     if (lowerMessage.includes('not working') || lowerMessage.includes('better')) {
        return {
-         text: "It sounds like you feel the treatment is not improving your condition. This requires a clinical reassessment by your doctor. Would you like to submit a request for your doctor to review your treatment plan?",
+         text: "It sounds like you feel the treatment is not improving your condition. This requires a clinical reassessment by your doctor.",
          escalationType: 'doctor',
          concernType: 'not_improving'
        }
     }
 
-    if (lowerMessage.includes('interaction') || lowerMessage.includes('together') || lowerMessage.includes('with')) {
+    if (lowerMessage.includes('increase') || lowerMessage.includes('decrease') || lowerMessage.includes('change')) {
       return {
-         text: "Drug interactions can be complex and depends on the specific medications and your health profile. While I have access to general drug interaction databases, this requires professional judgment. Would you like to ask your Care Pharmacist?",
-         escalationType: 'pharmacist',
-         concernType: 'other'
+         text: "⚠️ **I cannot alter your medication dosage.**\n\nAny changes to your therapy must be authorized by your physician. Would you like to submit a request for your doctor to review your treatment plan?",
+         escalationType: 'doctor',
+         concernType: 'medication_change'
       }
     }
 
     return {
-      text: "As your AI Assistant, I can answer basic questions about your verified medication plans. Based on our clinical safeguards, always adhere to the schedule approved by your Care Pharmacist and Doctor. If you have specific medical concerns, I can help you escalate them to your healthcare team. How else can I assist you?",
-      escalationType: null
+      text: "As your AI Assistant, I can answer basic questions about your verified medication plans based on approved general knowledge. Always adhere to the schedule approved by your Care Pharmacist and Doctor. If you have specific medical concerns, click below to escalate them to your healthcare team.",
+      escalationType: 'pharmacist', // Offer general triage
+      concernType: 'other'
     }
   }
 }

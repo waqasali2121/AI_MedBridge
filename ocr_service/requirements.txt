@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+paddleocr>=2.0.1
+paddlepaddle
+pytesseract
+PyMuPDF
+opencv-python
+numpy
+python-multipart
+pdf2image
