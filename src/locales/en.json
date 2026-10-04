@@ -1,0 +1,82 @@
+{
+  "brand": {
+    "name": "MedBridge",
+    "tagline": "One verified medication plan. One connected care journey.",
+    "subheading": "Bilingual Collaborative Healthcare Platform connecting Patients, Doctors, and Care Pharmacists.",
+    "disclaimer": "MedBridge is a medication coordination and information-support application. It does not replace a doctor, pharmacist, emergency service, diagnosis, examination, or professional medical advice."
+  },
+  "roles": {
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "pharmacist": "Care Pharmacist",
+    "pharmacy_operator": "Pharmacy Operator",
+    "admin": "System Admin"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "prescriptions": "Prescriptions",
+    "upload_prescription": "Upload Prescription",
+    "medications": "My Medications",
+    "reminders": "Schedule & Reminders",
+    "pharmacies": "Find Medicine & Stock",
+    "reservations": "Reservations",
+    "cases": "Care Inquiries & Cases",
+    "new_case": "Report Concern",
+    "profile": "Profile & Settings",
+    "patients": "Assigned Patients",
+    "treatment_plans": "Treatment Plans",
+    "counselling": "Medication Counselling",
+    "inventory": "Manage Inventory",
+    "users": "User Directory",
+    "medicines": "Medicine Catalogue",
+    "audit_logs": "Audit Trail",
+    "logout": "Sign Out",
+    "login": "Sign In",
+    "register": "Create Account"
+  },
+  "status": {
+    "draft": "Draft",
+    "processing": "Processing AI Extraction...",
+    "needs_clarification": "Needs Clarification",
+    "pending_pharmacist": "Pending Pharmacist Review",
+    "pending_doctor": "Pending Doctor Approval",
+    "approved": "Approved & Verified",
+    "rejected": "Rejected",
+    "archived": "Archived",
+    "superseded": "Superseded",
+    "available": "Available in Stock",
+    "low_stock": "Low Stock",
+    "out_of_stock": "Out of Stock",
+    "unknown": "Status Unknown",
+    "requested": "Reservation Requested",
+    "confirmed": "Reserved & Confirmed",
+    "fulfilled": "Fulfilled & Picked Up",
+    "cancelled": "Cancelled",
+    "open": "Open",
+    "pharmacist_reviewed": "Pharmacist Reviewed",
+    "doctor_resolved": "Doctor Decision Published",
+    "closed": "Resolved & Closed"
+  },
+  "patient_actions": {
+    "taken": "Patient Reported Taken",
+    "skip": "Skip Dose",
+    "remind_later": "Remind Later",
+    "report_concern": "Report a Problem / Concern",
+    "request_reservation": "Request Reservation",
+    "check_understanding": "Check Your Understanding",
+    "upload_btn": "Upload New Prescription"
+  },
+  "warnings": {
+    "emergency_title": "Urgent Medical Attention Warning",
+    "emergency_text": "If you are experiencing severe symptoms such as chest pain, severe difficulty breathing, facial swelling, or extreme dizziness, please seek immediate emergency medical care at the nearest hospital rather than waiting for an app response.",
+    "ai_assistant_only": "AI is an assistive draft tool only. All medication plans require confirmation by licensed healthcare professionals before reminders are activated.",
+    "reported_availability_note": "Inventory numbers are reported estimates from participating community pharmacies and are subject to real-time verification upon reservation."
+  },
+  "teach_back": {
+    "title": "Check Your Understanding (Teach-Back)",
+    "subtitle": "In your own words, explain how and when you will take your approved medications.",
+    "prompt": "How will you take this medicine? (e.g. Dose, timing with meals, weekly schedule)",
+    "submit": "Submit for Care Pharmacist Review",
+    "submitted": "Your explanation has been sent to your pharmacist for review."
+  }
+}
